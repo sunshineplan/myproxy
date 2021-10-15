@@ -1,0 +1,9 @@
+mode       = client
+psk        = psk
+host       = 0.0.0.0
+port       = 8080
+access-log = access.log
+error-log  = error.log
+server     = proxy.example.com:8080
+username   = username
+password   = password

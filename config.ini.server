@@ -1,0 +1,9 @@
+mode       = server
+psk        = $psk
+host       = $host
+port       = $port
+secrets    = $secrets
+cert       = $cert
+privkey    = $privkey
+access-log = $access
+error-log  = $error
