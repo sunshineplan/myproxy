@@ -1,14 +1,14 @@
 #! /bin/bash
 
 installMyProxy() {
-    mkdir -p /etc/httpproxy
-    curl -Lo- https://github.com/sunshineplan/httpproxy/releases/latest/download/release-linux.tar.gz | tar zxC /etc/httpproxy
-    cd /etc/httpproxy
-    chmod +x httpproxy
+    mkdir -p /etc/myproxy
+    curl -Lo- https://github.com/sunshineplan/myproxy/releases/latest/download/release-linux.tar.gz | tar zxC /etc/myproxy
+    cd /etc/myproxy
+    chmod +x myproxy
 }
 
 configMyProxy() {
-    touch /etc/httpproxy/secrets
+    touch /etc/myproxy/secrets
     read -p 'Please enter host (default: 0.0.0.0): ' host
     [ -z $host ] && host=0.0.0.0
     read -p 'Please enter port (default: 8080): ' port
@@ -17,18 +17,18 @@ configMyProxy() {
     read -p 'Please enter secrets path: ' secrets
     read -p 'Please enter cert path: ' cert
     read -p 'Please enter privkey path: ' privkey
-    read -p 'Please enter access log path (default: /var/log/httpproxy/access.log): ' access
-    [ -z $access ] && access=/var/log/httpproxy/access.log
-    read -p 'Please enter error log path (default: /var/log/httpproxy/error.log): ' error
-    [ -z $error ] && error=/var/log/httpproxy/error.log
-    sed "s/\$host/$host/" /etc/httpproxy/config.ini.server > /etc/httpproxy/config.ini
-    sed -i "s/\$port/$port/" /etc/httpproxy/config.ini
-    sed -i "s|\$psk|$psk|" /etc/httpproxy/config.ini
-    sed -i "s,\$secrets,$secrets," /etc/httpproxy/config.ini
-    sed -i "s,\$cert,$cert," /etc/httpproxy/config.ini
-    sed -i "s,\$privkey,$privkey," /etc/httpproxy/config.ini
-    sed -i "s,\$access,$access," /etc/httpproxy/config.ini
-    sed -i "s,\$error,$error," /etc/httpproxy/config.ini
+    read -p 'Please enter access log path (default: /var/log/myproxy/access.log): ' access
+    [ -z $access ] && access=/var/log/myproxy/access.log
+    read -p 'Please enter error log path (default: /var/log/myproxy/error.log): ' error
+    [ -z $error ] && error=/var/log/myproxy/error.log
+    sed "s/\$host/$host/" /etc/myproxy/config.ini.server > /etc/myproxy/config.ini
+    sed -i "s/\$port/$port/" /etc/myproxy/config.ini
+    sed -i "s|\$psk|$psk|" /etc/myproxy/config.ini
+    sed -i "s,\$secrets,$secrets," /etc/myproxy/config.ini
+    sed -i "s,\$cert,$cert," /etc/myproxy/config.ini
+    sed -i "s,\$privkey,$privkey," /etc/myproxy/config.ini
+    sed -i "s,\$access,$access," /etc/myproxy/config.ini
+    sed -i "s,\$error,$error," /etc/myproxy/config.ini
 }
 
 configSysctl() {
@@ -41,9 +41,9 @@ configSysctl() {
 }
 
 writeLogrotateScrip() {
-    mkdir -p /var/log/httpproxy
-    cat >/etc/logrotate.d/httpproxy <<-EOF
-		/var/log/httpproxy/access.log {
+    mkdir -p /var/log/myproxy
+    cat >/etc/logrotate.d/myproxy <<-EOF
+		/var/log/myproxy/access.log {
 		    copytruncate
 		    rotate 15
 		    daily
@@ -53,7 +53,7 @@ writeLogrotateScrip() {
 		    notifempty
 		}
 
-		/var/log/httpproxy/error.log {
+		/var/log/myproxy/error.log {
 		    copytruncate
 		    rotate 12
 		    monthly
@@ -70,8 +70,8 @@ main() {
     configMyProxy
     configSysctl
     writeLogrotateScrip
-    ./httpproxy install || exit 1
-    service httpproxy start
+    ./myproxy install || exit 1
+    service myproxy start
 }
 
 main
