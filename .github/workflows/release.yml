@@ -60,8 +60,8 @@ jobs:
 
       - name: Pack
         run: |
-          tar cvzf release-linux.tar.gz httpproxy config.ini.default secrets.default
-          zip -9vr release-windows.zip httpproxy.exe config.ini.default secrets.default
+          tar cvzf release-linux.tar.gz myproxy config.ini.server config.ini.client secrets.default
+          zip -9vr release-windows.zip myproxy.exe config.ini.server config.ini.client secrets.default
 
       - name: Create Release
         uses: softprops/action-gh-release@v1
