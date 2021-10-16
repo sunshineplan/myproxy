@@ -76,7 +76,7 @@ func parseBasicAuth(auth string) (username, password string) {
 }
 
 func serverHandler(w http.ResponseWriter, r *http.Request) {
-	user, pass := parseBasicAuth(r.Header.Get("Session-Authorization"))
+	user, pass := parseBasicAuth(r.Header.Get(*header))
 	if !hasAccount(user, pass) {
 		errorLogger.Printf("%s Authentication Failed", r.RemoteAddr)
 		http.Error(w, "", http.StatusNoContent)

@@ -1,7 +1,7 @@
 package main
 
 import (
-	"crypto/tls"
+	"bufio"
 	"io"
 	"log"
 	"net/http"
@@ -11,23 +11,32 @@ import (
 	"github.com/sunshineplan/utils/httpproxy"
 )
 
-var proxyURL *url.URL
 var proxy *httpproxy.Proxy
 
 func initProxy() {
-	var err error
-	proxyURL, err = url.Parse("https://" + *server)
+	var forwardProxy *httpproxy.Proxy
+	if *forward != "" {
+		forwardURL, err := url.Parse(*forward)
+		if err != nil {
+			log.Fatalln("bad forward proxy:", *forward)
+		}
+		forwardProxy = httpproxy.New(forwardURL, nil)
+	}
+	proxyURL, err := url.Parse("https://" + *server)
 	if err != nil {
 		log.Fatalln("bad server address:", *server)
 	}
-	proxy = httpproxy.New(proxyURL, nil)
-	svr.Handler = http.HandlerFunc(clientHandler)
+	proxy = httpproxy.New(proxyURL, forwardProxy)
 }
 
 func clientTunneling(w http.ResponseWriter, r *http.Request) {
-	dest_conn, _, err := proxy.DialWithHeader(r.Host, r.Header)
+	dest_conn, resp, err := proxy.DialWithHeader(r.Host, r.Header)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusServiceUnavailable)
+		return
+	}
+	if resp.StatusCode != http.StatusOK {
+		http.Error(w, resp.Status, resp.StatusCode)
 		return
 	}
 
@@ -50,12 +59,32 @@ func clientTunneling(w http.ResponseWriter, r *http.Request) {
 }
 
 func clientHTTP(w http.ResponseWriter, r *http.Request) {
-	tr := &http.Transport{
-		Proxy:        http.ProxyURL(proxyURL),
-		TLSNextProto: make(map[string]func(authority string, c *tls.Conn) http.RoundTripper),
+	port := r.URL.Port()
+	if port == "" {
+		port = "80"
 	}
-	resp, err := tr.RoundTrip(r)
+	conn, resp, err := proxy.DialWithHeader(r.Host+":"+port, r.Header)
 	if err != nil {
+		http.Error(w, err.Error(), http.StatusServiceUnavailable)
+		return
+	}
+	if resp.StatusCode != http.StatusOK {
+		conn.Close()
+		http.Error(w, resp.Status, resp.StatusCode)
+		return
+	}
+
+	r.Header.Del(*header)
+	if err := r.Write(conn); err != nil {
+		conn.Close()
+		http.Error(w, err.Error(), http.StatusServiceUnavailable)
+		return
+	}
+
+	br := bufio.NewReader(conn)
+	resp, err = http.ReadResponse(br, r)
+	if err != nil {
+		conn.Close()
 		http.Error(w, err.Error(), http.StatusServiceUnavailable)
 		return
 	}
@@ -72,7 +101,7 @@ func clientHTTP(w http.ResponseWriter, r *http.Request) {
 }
 
 func clientHandler(w http.ResponseWriter, r *http.Request) {
-	r.Header.Set("Session-Authorization", cipher.EncryptText(*psk, *username+":"+*password))
+	r.Header.Set(*header, cipher.EncryptText(*psk, *username+":"+*password))
 
 	accessLogger.Printf("%s %s", r.Method, r.URL)
 	if r.Method == http.MethodConnect {

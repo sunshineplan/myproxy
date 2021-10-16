@@ -16,25 +16,69 @@ import (
 // common
 var (
 	mode      = flag.String("mode", "client", "server or client mode")
-	psk       = flag.String("psk", "", "pre-shared key")
+	psk       = flag.String("psk", "", "Pre-shared key")
+	header    = flag.String("header", "Server-Authorization", "Authorization header")
 	accesslog = flag.String("access-log", "", "Path to access log file")
 	errorlog  = flag.String("error-log", "", "Path to error log file")
 	debug     = flag.Bool("debug", false, "debug")
 )
 
+const commonFlag = `
+common:
+  --host <string>
+    	Listening host
+  --port <number>
+    	Listening port
+  --mode <string>
+    	Specify server or client mode (default: client)
+  --psk <string>
+    	Pre-shared key
+  --header <string>
+    	Authorization header name (default: Server-Authorization)
+  --access-log <file>
+    	Path to access log file
+  --error-log <file>
+    	Path to error log file
+  --update <url>
+    	Update URL
+`
+
 // server
 var (
-	secrets = flag.String("secrets", "", "Path to secrets file for Basic Authentication")
+	secrets = flag.String("secrets", "", "Path to secrets file for Authentication")
 	cert    = flag.String("cert", "", "Path to certificate file")
 	privkey = flag.String("privkey", "", "Path to private key file")
 )
 
+const serverFlag = `
+server side:
+  --secrets <file>
+    	Path to secrets file for Authentication
+  --cert <file>
+    	Path to certificate file
+  --privkey <file>
+    	Path to private key file
+`
+
 // client
 var (
 	server   = flag.String("server", "", "Server address")
+	forward  = flag.String("forward", "", "Forward proxy")
 	username = flag.String("username", "", "Username")
 	password = flag.String("password", "", "Password")
 )
+
+const clientFlag = `
+client side:
+  --server <string>
+    	Server address
+  --forward <string>
+    	Forward proxy
+  --username <string>
+    	Username for Authentication
+  --password <string>
+    	Password for Authentication
+`
 
 var self string
 var svr = httpsvr.New()
@@ -57,29 +101,10 @@ func init() {
 	}
 }
 
-func usage() {
-	fmt.Fprintf(flag.CommandLine.Output(), `Usage of %s:
-  --host <string>
-    	Listening host
-  --port <number>
-    	Listening port
-  --secrets <file>
-    	Path to secrets file for Basic Authentication
-  --cert <file>
-    	Path to certificate file
-  --privkey <file>
-    	Path to private key file
-  --access-log <file>
-    	Path to access log file
-  --error-log <file>
-    	Path to error log file
-  --update <url>
-    	Update URL
-%s`, os.Args[0], service.Usage)
-}
-
 func main() {
-	flag.Usage = usage
+	flag.Usage = func() {
+		fmt.Fprintf(flag.CommandLine.Output(), `Usage of %s:%s%s%s%s`, os.Args[0], commonFlag, serverFlag, clientFlag, service.Usage)
+	}
 	flag.StringVar(&svr.Host, "host", "", "Listening host")
 	flag.StringVar(&svr.Port, "port", "", "Listening port")
 	flag.StringVar(&svc.Options.UpdateURL, "update", "", "Update URL")
