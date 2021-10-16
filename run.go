@@ -22,8 +22,7 @@ func runServer() {
 }
 
 func runClient() {
-	svr.Handler = http.HandlerFunc(clientHandler)
-
+	initProxy()
 	initLogger()
 
 	if err := svr.Run(); err != nil {

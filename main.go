@@ -94,12 +94,6 @@ func main() {
 		log.Fatal("pre-shared key can not be empty")
 	}
 
-	if *secrets == "" {
-		if info, err := os.Stat(filepath.Join(filepath.Dir(self), "secrets")); err == nil && !info.IsDir() {
-			*secrets = filepath.Join(filepath.Dir(self), "secrets")
-		}
-	}
-
 	if service.IsWindowsService() {
 		svc.Run(false)
 		return

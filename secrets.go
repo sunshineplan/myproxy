@@ -2,6 +2,8 @@ package main
 
 import (
 	"log"
+	"os"
+	"path/filepath"
 	"strings"
 	"sync"
 	"time"
@@ -15,6 +17,12 @@ var mu sync.Mutex
 var accounts map[string][]string
 
 func initSecrets() {
+	if *secrets == "" {
+		if info, err := os.Stat(filepath.Join(filepath.Dir(self), "secrets")); err == nil && !info.IsDir() {
+			*secrets = filepath.Join(filepath.Dir(self), "secrets")
+		}
+	}
+
 	if *secrets != "" {
 		rows, err := txt.ReadFile(*secrets)
 		if err != nil {
