@@ -11,13 +11,12 @@ import (
 
 	"github.com/sunshineplan/cipher"
 	"github.com/sunshineplan/utils/httpproxy"
-	"golang.org/x/net/proxy"
 )
 
 var p *httpproxy.Proxy
 
 func initProxy() {
-	var forwardProxy proxy.Dialer
+	var forwardProxy httpproxy.Dialer
 	if *forward != "" {
 		forwardURL, err := url.Parse(*forward)
 		if err != nil {
@@ -25,7 +24,7 @@ func initProxy() {
 		}
 		forwardProxy = httpproxy.New(forwardURL, nil)
 	} else {
-		forwardProxy = proxy.Direct
+		forwardProxy = httpproxy.Direct
 	}
 	proxyURL, err := url.Parse("https://" + *server)
 	if err != nil {
