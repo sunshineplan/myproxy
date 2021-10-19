@@ -59,7 +59,7 @@ func serverHTTP(w http.ResponseWriter, r *http.Request) {
 	io.Copy(w, resp.Body)
 }
 
-func parseBasicAuth(auth string) (username, password string) {
+func parseAuth(auth string) (username, password string) {
 	if auth == "" {
 		return
 	}
@@ -76,12 +76,13 @@ func parseBasicAuth(auth string) (username, password string) {
 }
 
 func serverHandler(w http.ResponseWriter, r *http.Request) {
-	user, pass := parseBasicAuth(r.Header.Get(*header))
+	user, pass := parseAuth(r.Header.Get(*header))
 	if !hasAccount(user, pass) {
 		errorLogger.Printf("%s Authentication Failed", r.RemoteAddr)
 		http.Error(w, "", http.StatusNoContent)
 		return
 	}
+	r.Header.Del(*header)
 
 	accessLogger.Printf("%s[%s] %s %s", r.RemoteAddr, user, r.Method, r.URL)
 	if r.Method == http.MethodConnect {

@@ -26,6 +26,7 @@ func runClient() {
 
 	initProxy()
 	initLogger()
+	initSecrets()
 	if *autoproxy {
 		initAutoproxy()
 	}

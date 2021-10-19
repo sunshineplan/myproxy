@@ -18,6 +18,7 @@ var (
 	mode      = flag.String("mode", "client", "server or client mode")
 	psk       = flag.String("psk", "", "Pre-shared key")
 	header    = flag.String("header", "Server-Authorization", "Authorization header")
+	secrets   = flag.String("secrets", "", "Path to secrets file for Authentication")
 	accesslog = flag.String("access-log", "", "Path to access log file")
 	errorlog  = flag.String("error-log", "", "Path to error log file")
 	debug     = flag.Bool("debug", false, "debug")
@@ -35,6 +36,8 @@ common:
     	Pre-shared key
   --header <string>
     	Authorization header name (default: Server-Authorization)
+  --secrets <file>
+    	Path to secrets file for Authentication
   --access-log <file>
     	Path to access log file
   --error-log <file>
@@ -45,15 +48,12 @@ common:
 
 // server
 var (
-	secrets = flag.String("secrets", "", "Path to secrets file for Authentication")
 	cert    = flag.String("cert", "", "Path to certificate file")
 	privkey = flag.String("privkey", "", "Path to private key file")
 )
 
 const serverFlag = `
 server side:
-  --secrets <file>
-    	Path to secrets file for Authentication
   --cert <file>
     	Path to certificate file
   --privkey <file>

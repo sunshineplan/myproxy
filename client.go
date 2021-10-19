@@ -2,10 +2,12 @@ package main
 
 import (
 	"bufio"
+	"encoding/base64"
 	"io"
 	"log"
 	"net/http"
 	"net/url"
+	"strings"
 
 	"github.com/sunshineplan/cipher"
 	"github.com/sunshineplan/utils/httpproxy"
@@ -80,7 +82,6 @@ func clientHTTP(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	r.Header.Del(*header)
 	if err := r.Write(conn); err != nil {
 		conn.Close()
 		http.Error(w, err.Error(), http.StatusServiceUnavailable)
@@ -106,9 +107,45 @@ func clientHTTP(w http.ResponseWriter, r *http.Request) {
 	io.Copy(w, resp.Body)
 }
 
+func parseBasicAuth(auth string) (username, password string, ok bool) {
+	const prefix = "Basic "
+	if len(auth) < len(prefix) || !strings.EqualFold(auth[:len(prefix)], prefix) {
+		return
+	}
+	c, err := base64.StdEncoding.DecodeString(auth[len(prefix):])
+	if err != nil {
+		return
+	}
+	cs := string(c)
+	s := strings.IndexByte(cs, ':')
+	if s < 0 {
+		return
+	}
+	return cs[:s], cs[s+1:], true
+}
+
 func clientHandler(w http.ResponseWriter, r *http.Request) {
+	user := "anonymous"
+	var pass string
+	var ok bool
+	if len(accounts) != 0 {
+		user, pass, ok = parseBasicAuth(r.Header.Get("Proxy-Authorization"))
+		if !ok {
+			accessLogger.Printf("%s Proxy Authentication Required", r.RemoteAddr)
+			w.Header().Add("Proxy-Authenticate", `Basic realm="My Proxy"`)
+			http.Error(w, "", http.StatusProxyAuthRequired)
+			return
+		} else if !hasAccount(user, pass) {
+			errorLogger.Printf("%s Proxy Authentication Failed", r.RemoteAddr)
+			w.Header().Add("Proxy-Authenticate", `Basic realm="My Proxy"`)
+			http.Error(w, "", http.StatusProxyAuthRequired)
+			return
+		}
+		r.Header.Del("Proxy-Authorization")
+	}
+
 	if *autoproxy && !match(r.URL) {
-		accessLogger.Printf("[direct] %s %s", r.Method, r.URL)
+		accessLogger.Printf("[direct] %s[%s] %s %s", r.RemoteAddr, user, r.Method, r.URL)
 		if r.Method == http.MethodConnect {
 			serverTunneling(w, r)
 		} else {
@@ -119,7 +156,7 @@ func clientHandler(w http.ResponseWriter, r *http.Request) {
 
 	r.Header.Set(*header, cipher.EncryptText(*psk, *username+":"+*password))
 
-	accessLogger.Printf("%s %s", r.Method, r.URL)
+	accessLogger.Printf("%s[%s] %s %s", r.RemoteAddr, user, r.Method, r.URL)
 	if r.Method == http.MethodConnect {
 		clientTunneling(w, r)
 	} else {
