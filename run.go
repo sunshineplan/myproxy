@@ -26,6 +26,9 @@ func runClient() {
 
 	initProxy()
 	initLogger()
+	if *autoproxy {
+		initAutoproxy()
+	}
 
 	if err := svr.Run(); err != nil {
 		log.Fatal(err)
@@ -64,6 +67,11 @@ func test() error {
 	if *mode == "client" {
 		if _, err := url.Parse("https://" + *server); err != nil {
 			return err
+		}
+		if *autoproxy {
+			if _, err := getAutoproxy(); err != nil {
+				return err
+			}
 		}
 	}
 

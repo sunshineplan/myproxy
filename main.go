@@ -62,10 +62,12 @@ server side:
 
 // client
 var (
-	server   = flag.String("server", "", "Server address")
-	forward  = flag.String("forward", "", "Forward proxy")
-	username = flag.String("username", "", "Username")
-	password = flag.String("password", "", "Password")
+	server       = flag.String("server", "", "Server address")
+	forward      = flag.String("forward", "", "Forward proxy")
+	username     = flag.String("username", "", "Username")
+	password     = flag.String("password", "", "Password")
+	autoproxy    = flag.Bool("autoproxy", false, "Enable autoproxy")
+	autoproxyURL = flag.String("autoproxy-url", "", "Custom autoproxy URL")
 )
 
 const clientFlag = `
@@ -78,6 +80,10 @@ client side:
     	Username for Authentication
   --password <string>
     	Password for Authentication
+  --autoproxy
+    	Enable autoproxy
+  --autoproxy-url <string>
+    	Autoproxy URL
 `
 
 var self string

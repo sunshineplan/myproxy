@@ -38,4 +38,7 @@ func initLogger() {
 	} else if !*debug {
 		errorLogger.SetOutput(io.Discard)
 	}
+	if *debug {
+		log.Print("Logger initialized")
+	}
 }

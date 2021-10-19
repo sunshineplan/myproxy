@@ -9,28 +9,34 @@ import (
 
 	"github.com/sunshineplan/cipher"
 	"github.com/sunshineplan/utils/httpproxy"
+	"golang.org/x/net/proxy"
 )
 
-var proxy *httpproxy.Proxy
+var p *httpproxy.Proxy
 
 func initProxy() {
-	var forwardProxy *httpproxy.Proxy
+	var forwardProxy proxy.Dialer
 	if *forward != "" {
 		forwardURL, err := url.Parse(*forward)
 		if err != nil {
 			log.Fatalln("bad forward proxy:", *forward)
 		}
 		forwardProxy = httpproxy.New(forwardURL, nil)
+	} else {
+		forwardProxy = proxy.Direct
 	}
 	proxyURL, err := url.Parse("https://" + *server)
 	if err != nil {
 		log.Fatalln("bad server address:", *server)
 	}
-	proxy = httpproxy.New(proxyURL, forwardProxy)
+	p = httpproxy.New(proxyURL, forwardProxy)
+	if *debug {
+		log.Print("Proxy ready")
+	}
 }
 
 func clientTunneling(w http.ResponseWriter, r *http.Request) {
-	dest_conn, resp, err := proxy.DialWithHeader(r.Host, r.Header)
+	dest_conn, resp, err := p.DialWithHeader(r.Host, r.Header)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusServiceUnavailable)
 		return
@@ -63,7 +69,7 @@ func clientHTTP(w http.ResponseWriter, r *http.Request) {
 	if port == "" {
 		port = "80"
 	}
-	conn, resp, err := proxy.DialWithHeader(r.Host+":"+port, r.Header)
+	conn, resp, err := p.DialWithHeader(r.Host+":"+port, r.Header)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusServiceUnavailable)
 		return
@@ -101,6 +107,16 @@ func clientHTTP(w http.ResponseWriter, r *http.Request) {
 }
 
 func clientHandler(w http.ResponseWriter, r *http.Request) {
+	if *autoproxy && !match(r.URL) {
+		accessLogger.Printf("[direct] %s %s", r.Method, r.URL)
+		if r.Method == http.MethodConnect {
+			serverTunneling(w, r)
+		} else {
+			serverHTTP(w, r)
+		}
+		return
+	}
+
 	r.Header.Set(*header, cipher.EncryptText(*psk, *username+":"+*password))
 
 	accessLogger.Printf("%s %s", r.Method, r.URL)

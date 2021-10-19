@@ -7,3 +7,4 @@ error-log  = error.log
 server     = proxy.example.com:8080
 username   = username
 password   = password
+autoproxy  = true

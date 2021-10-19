@@ -40,6 +40,9 @@ func initSecrets() {
 				parseSecrets(rows, false)
 			}
 		}()
+		if *debug {
+			log.Print("Secrets initialized")
+		}
 	}
 }
 
