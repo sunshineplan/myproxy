@@ -3,7 +3,7 @@ module myproxy
 go 1.16
 
 require (
-	github.com/sunshineplan/cipher v1.0.3
+	github.com/sunshineplan/cipher v1.0.4
 	github.com/sunshineplan/service v1.0.2
 	github.com/sunshineplan/utils v0.0.19
 	github.com/sunshineplan/utils/httpproxy v1.0.4
