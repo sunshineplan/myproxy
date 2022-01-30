@@ -10,13 +10,16 @@ import (
 	"github.com/sunshineplan/cipher"
 )
 
-func transfer(dst io.WriteCloser, src io.ReadCloser) {
+func transfer(dst io.WriteCloser, src io.ReadCloser, user string) {
 	defer dst.Close()
 	defer src.Close()
-	io.Copy(dst, src)
+	n, _ := io.Copy(dst, src)
+	if user != "" {
+		count(user, uint64(n))
+	}
 }
 
-func serverTunneling(w http.ResponseWriter, r *http.Request) {
+func serverTunneling(user string, w http.ResponseWriter, r *http.Request) {
 	dest_conn, err := net.DialTimeout("tcp", r.Host, 10*time.Second)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusServiceUnavailable)
@@ -37,11 +40,11 @@ func serverTunneling(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	go transfer(dest_conn, client_conn)
-	go transfer(client_conn, dest_conn)
+	go transfer(dest_conn, client_conn, "")
+	go transfer(client_conn, dest_conn, user)
 }
 
-func serverHTTP(w http.ResponseWriter, r *http.Request) {
+func serverHTTP(user string, w http.ResponseWriter, r *http.Request) {
 	resp, err := http.DefaultTransport.RoundTrip(r)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusServiceUnavailable)
@@ -56,7 +59,8 @@ func serverHTTP(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 	w.WriteHeader(resp.StatusCode)
-	io.Copy(w, resp.Body)
+	n, _ := io.Copy(w, resp.Body)
+	count(user, uint64(n))
 }
 
 func parseAuth(auth string) (username, password string) {
@@ -86,8 +90,8 @@ func serverHandler(w http.ResponseWriter, r *http.Request) {
 
 	accessLogger.Printf("%s[%s] %s %s", r.RemoteAddr, user, r.Method, r.URL)
 	if r.Method == http.MethodConnect {
-		serverTunneling(w, r)
+		serverTunneling(user, w, r)
 	} else {
-		serverHTTP(w, r)
+		serverHTTP(user, w, r)
 	}
 }

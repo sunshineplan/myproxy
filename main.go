@@ -19,6 +19,7 @@ var (
 	psk       = flag.String("psk", "", "Pre-shared key")
 	header    = flag.String("header", "Server-Authorization", "Authorization header")
 	secrets   = flag.String("secrets", "", "Path to secrets file for Authentication")
+	status    = flag.String("status", "", "Path to status file")
 	accesslog = flag.String("access-log", "", "Path to access log file")
 	errorlog  = flag.String("error-log", "", "Path to error log file")
 	debug     = flag.Bool("debug", false, "debug")
@@ -38,6 +39,8 @@ common:
     	Authorization header name (default: Server-Authorization)
   --secrets <file>
     	Path to secrets file for Authentication
+  --status <file>
+    	Path to status file
   --access-log <file>
     	Path to access log file
   --error-log <file>
@@ -96,6 +99,7 @@ var svc = service.Service{
 	TestExec: test,
 	Options: service.Options{
 		Dependencies: []string{"After=network.target"},
+		Others:       []string{"ExecReload=kill -HUP $MAINPID"},
 	},
 }
 

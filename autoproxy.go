@@ -15,7 +15,7 @@ import (
 	"github.com/sunshineplan/utils/txt"
 )
 
-var c = cache.New(false)
+var ac = cache.New(false)
 
 type autoproxyList struct {
 	domain  []string
@@ -25,7 +25,7 @@ type autoproxyList struct {
 }
 
 func match(u *url.URL) bool {
-	i, _ := c.Get("autoproxy")
+	i, _ := ac.Get("autoproxy")
 	list, ok := i.(autoproxyList)
 	if !ok {
 		log.Print("failed to load autoproxy")
@@ -135,7 +135,7 @@ func initAutoproxy() {
 	if err != nil {
 		log.Fatalln("failed to get autoproxy:", err)
 	}
-	c.Set("autoproxy", list, 24*time.Hour, getAutoproxy)
+	ac.Set("autoproxy", list, 24*time.Hour, getAutoproxy)
 	if *debug {
 		log.Print("Autoproxy initialized")
 	}

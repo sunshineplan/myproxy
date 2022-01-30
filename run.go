@@ -7,14 +7,19 @@ import (
 	"net/http"
 	"net/url"
 	"strconv"
+	"time"
 )
 
 func runServer() {
 	svr.Handler = http.HandlerFunc(serverHandler)
 	svr.TLSNextProto = make(map[string]func(*http.Server, *tls.Conn, http.Handler))
+	svr.ReadTimeout = time.Minute * 10
+	svr.ReadHeaderTimeout = time.Second * 4
+	svr.WriteTimeout = time.Minute * 10
 
 	initLogger()
 	initSecrets()
+	initStatus()
 
 	if err := svr.RunTLS(*cert, *privkey); err != nil {
 		log.Fatal(err)
@@ -27,6 +32,7 @@ func runClient() {
 	initProxy()
 	initLogger()
 	initSecrets()
+	initStatus()
 	if *autoproxy {
 		initAutoproxy()
 	}
