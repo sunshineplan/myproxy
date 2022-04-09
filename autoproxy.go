@@ -71,7 +71,7 @@ func match(u *url.URL) bool {
 	return false
 }
 
-func getAutoproxy() (interface{}, error) {
+func getAutoproxy() (any, error) {
 	var r io.ReadCloser
 	if *autoproxyURL == "" {
 		body, err := executor.ExecuteConcurrentArg(
@@ -79,8 +79,8 @@ func getAutoproxy() (interface{}, error) {
 				"https://raw.githubusercontent.com/sunshineplan/autoproxy/release/autoproxy.txt",
 				"https://cdn.jsdelivr.net/gh/sunshineplan/autoproxy@release/autoproxy.txt",
 			},
-			func(url interface{}) (interface{}, error) {
-				resp, err := http.Get(url.(string))
+			func(url string) (any, error) {
+				resp, err := http.Get(url)
 				if err != nil {
 					return nil, err
 				}
