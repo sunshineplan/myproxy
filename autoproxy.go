@@ -78,6 +78,7 @@ func getAutoproxy() (any, error) {
 			[]string{
 				"https://raw.githubusercontent.com/sunshineplan/autoproxy/release/autoproxy.txt",
 				"https://cdn.jsdelivr.net/gh/sunshineplan/autoproxy@release/autoproxy.txt",
+				"https://fastly.jsdelivr.net/gh/sunshineplan/autoproxy@release/autoproxy.txt",
 			},
 			func(url string) (any, error) {
 				resp, err := http.Get(url)
